@@ -2,6 +2,8 @@ import Piece_constants
 import Board_constants
 import Player_constants
 import math
+import copy
+
 
 no_piece = Piece_constants.no_piece
 king = Piece_constants.king
@@ -30,6 +32,8 @@ left = -1
 up = 1
 down = -1
 
+DNE = -50
+
 
 empty_board = [[0,0,0,0,0,0,0,0],
                [0,0,0,0,0,0,0,0],
@@ -51,6 +55,19 @@ start_board = [
                [-rook  ,-knight,-bishop,-queen ,-king  ,-bishop,-knight ,-rook  ],
                
                ]
+
+def find_king(board, player):
+    '''find_king(board, player) returns a list containing the row and column of the co-ordinates of player's king'''
+    row = 0
+    while (row <= 7):
+        col = 0
+        while (col <= 7):
+            if board[row][col] == (player * king):
+                return [row, col]
+            col = col + 1
+        row = row + 1
+    return [DNE, DNE]
+    
 
 def print_board(board, player_turn):
     ''' print_board(board player_turn) prints each piece in board'''
@@ -114,13 +131,16 @@ def print_board(board, player_turn):
 def perform_move(board, start_col, start_row, end_col, end_row, player):
     '''perform_move(board, start_col, start_row, end_col, end_row, player) moves the piece from 
    (start_row, start_col) to (end_row, end_col) on board, then returns that board'''
-    start_val = board[start_row][start_col]
-    print("start_val1 is" + str(start_val))
-    board[start_row][start_col] = 0
-    print("start_val2 is" + str(start_val))
-    board[end_row][end_col] = start_val
 
-    return board;
+    
+    board2 = copy.deepcopy(board)
+    start_val = board2[start_row][start_col]
+    print("start_val1 is" + str(start_val))
+    board2[start_row][start_col] = 0
+    
+    board2[end_row][end_col] = start_val
+    print('equal boards' + str(board == board2))
+    return board2
 
 
 
@@ -133,11 +153,12 @@ def legal_move(board, start_col, start_row, end_col, end_row, player):
         or (start_col > 8) or (start_col < 0)
         or (end_row > 8) or (end_row < 0)
         or (end_col > 8) or (end_col < 0)) :
-        print("bad row")
+        
         return False;
             
     piece = board[start_row][start_col]
     print("piece is" + str(piece))
+    print("player is" + str(player))
     end_piece = board[end_row][end_col]
     i = 1
     good_start_posn = False
@@ -149,23 +170,47 @@ def legal_move(board, start_col, start_row, end_col, end_row, player):
             self_interfere_end = True
         i = i + 1
     if (not(good_start_posn) or (self_interfere_end)):
-        print("no goood start")
+        return False
+    legality = False
+    if abs(piece) == pawn :
+        legality = legal_move_pawn(board, start_col, start_row, end_col, end_row, player)
+    if abs(piece) == rook :
+        legality = legal_move_rook(board, start_col, start_row, end_col, end_row, player)
+    if abs(piece) == bishop :
+        legality = legal_move_bishop(board, start_col, start_row, end_col, end_row, player)
+    if abs(piece) == knight :
+        legality = legal_move_knight(board, start_col, start_row, end_col, end_row, player)
+    if abs(piece) == queen :
+        legality = legal_move_queen(board, start_col, start_row, end_col, end_row, player)
+    if abs(piece) == king :
+        legality = legal_move_king(board, start_col, start_row, end_col, end_row, player)
+
+    if legality == False:
         return False
 
-    if abs(piece) == pawn :
-        return legal_move_pawn(board, start_col, start_row, end_col, end_row, player)
-    if abs(piece) == rook :
-        return legal_move_rook(board, start_col, start_row, end_col, end_row, player)
-    if abs(piece) == bishop :
-        return legal_move_bishop(board, start_col, start_row, end_col, end_row, player)
-    if abs(piece) == knight :
-        return legal_move_knight(board, start_col, start_row, end_col, end_row, player)
-    if abs(piece) == queen :
-        return legal_move_queen(board, start_col, start_row, end_col, end_row, player)
+    
+    board2 = perform_move(board,start_col,start_row,end_col,end_row,player)
+    print('bb equal' + str(board == board2))
+    friendly_king_posn = find_king(board2, player)
+    friendly_king_safety = king_is_safe(board2,player, friendly_king_posn[0],friendly_king_posn[1])
+    if (friendly_king_safety == False):
+        return False
+    print("done this")
+    enemy_king_posn = find_king(board2, (-1 * player))
+    print("enemy player is" + str(-1 * player))
+    print('enemy king posn is' + str(enemy_king_posn))
+    enemy_king_safety = king_is_safe(board2, (-1 * player), enemy_king_posn[0], enemy_king_posn[1])
+
+    if (enemy_king_safety == False):
+        # temporary code:
+        print("Check")
+        noth = 0
+        # do a checkmate check
+
 
     
 
-    # continue to check if each piece move is legal, then check with function (king_is_safe) with a theoretical board,
+    # continue to check if each piece move is legal, then check with function (king_is_safe) with a pietheoretical board,
     #  board2, with current proposed move implemented.
 
     return True
@@ -184,8 +229,9 @@ def legal_move_pawn(board, start_col, start_row, end_col, end_row, player):
     cols_moved = end_col - start_col
     end_piece_init = board[end_row][end_col]
     opposite_piece = end_piece_init * board[start_row][start_col] < 0
-    print('rows moved up is' + str(rows_moved_up))
-
+    
+    if rows_moved_up < 1:
+       return False
    # max_row represents the max num of rows the pawn can move up 
     max_row = 1
 
@@ -194,17 +240,17 @@ def legal_move_pawn(board, start_col, start_row, end_col, end_row, player):
 
     if (rows_moved_up > max_row):
         # too many move-ups
-        print("too may rows ")
+        
         return False
 
     if (abs(cols_moved) > 0):
         #can ever only move one column at most (diagonal once)
         if abs(cols_moved) > 1 or not(rows_moved_up == 1):
-            print("too many cols")
+            
             return False
         else:
             # must be opposite sided pieces diagonal to pawn to move diagonal
-            print("no diag pawn kill")
+            
             return ((rows_moved_up == 1) and (player * end_piece_init < 0))
     elif (opposite_piece == True):
         return False
@@ -323,7 +369,65 @@ def legal_move_queen(board, start_col, start_row, end_col, end_row, player):
         move_type = bishop
     elif (rows_moved == 0 or cols_moved == 0):
         move_type = rook
+
+    if move_type == 0:
+        return False
+    if move_type == bishop:
+        return legal_move_bishop(board, start_col, start_row, end_col, end_row, player)
+    else:
+        return legal_move_rook(board, start_col, start_row, end_col, end_row, player)
+
+def legal_move_king(board, start_col, start_row, end_col, end_row, player):
+    ''' legal_move_pawn(board, start_col, start_row, end_col, end_row, player) determines 
+    if move from (start_row, start_col) -> (end_row, end_col) where the starting piece is a king is legal
     
+    requires: end position must be valid(i.e. not a friendly piece, different than start position)
+              start position must have a king from player
+    '''
+    rows_moved = end_row - start_row
+    cols_moved = end_col - start_col
+
+    good_move = False
+    if (abs(rows_moved) <= 1 and abs(cols_moved) <= 1):
+        good_move = True
+
+    return good_move
+
+def king_is_safe(theor_board, player, king_row, king_col):
+    ''' king_is_safe(theor_board, player, king_row, king_col) determines if the player's king
+    located at (king_row, king_col) is valid.
+    requires: player's king is at (king-row, king_col)
+    '''
+    safe = True
+    row = 0
+    while row <= 7:
+        col = 0
+        while col <= 7:
+            cur_piece = theor_board[row][col]
+            if abs(cur_piece) > 0:
+                if cur_piece / abs(cur_piece) == -1 * player:
+                    if legal_move(theor_board,col,row,king_col,king_row, -1 * player):
+                        safe = False
+            col = col + 1
+        row = row + 1
+    return safe
+
+
+def poss_rook_moves(board, rook_row, rook_col, player):
+    rook_moves = [[rook_row, rook_col], []]
+    sec_lst_idx = 0
+    right = rook_row + 1
+    while(legal_move(board, rook_row, rook_col, right, rook_col, player)):
+        rook_moves[1][sec_list_idx] = [right, rook_col]
+        right = right + 1
+        sec_list_idx = sec_list_idx + 1
+    
+    left = rook_row - 1
+    while(legal_move(board, rook_row, rook_col, left, rook_col, player)()):
+        rook_moves[1][sec_list_idx] = [left, rook_col]
+        left = left - 1
+        sec_list_idx = sec_list_idx + 1
+        
 
 print('''
 Welcome to Python Chess!
@@ -364,7 +468,14 @@ while (1 == 1):
             player_name = 'White'
         else: 
             player_name = 'Black'
-        move_string = input(player_name + ", what is your move?: ")
+        invalid_string = True
+        while(invalid_string == True):
+            move_string = input(player_name + ", what is your move?: ")
+            if (len(move_string) == 5 and (move_string[0] in alph_up) and (move_string[1] in "1234567")
+            and (move_string[2] == ' ') and (move_string [3] in alph_up) and move_string[4] in "1234567"):
+                invalid_string = False
+
+
         poss_start_row = move_string[1]
         poss_start_col = move_string[0]
         poss_end_row = move_string[4]
@@ -377,20 +488,15 @@ while (1 == 1):
 
         print("start position is " + str(start_row) + str(start_col))
         print("end position is " + str(end_row) + str(end_col))
-        print("legality is" + str(legal_move(board, start_col, start_row, end_col, end_row, player)))
+        #board_init = board.copy()
+        #board_init2 = board.copy()
+        #print("legality is" + str(legal_move(board, start_col, start_row, end_col, end_row, player)))
         if (legal_move(board, start_col, start_row, end_col, end_row, player) == True):
             illegal_Move = False
-            new_board = perform_move(board, start_col, start_row, end_col, end_row, player)
+            board = perform_move(board, start_col, start_row, end_col, end_row, player)
             player = -1 * player
-            print_board(new_board, player)  
+            print_board(board, player)  
         else:
             print("illegal move, try again")
         
     
-    
-
-        
-    
-
-
-
