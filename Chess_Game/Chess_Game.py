@@ -138,7 +138,16 @@ def perform_move(board, start_col, start_row, end_col, end_row, player):
     print("start_val1 is" + str(start_val))
     board2[start_row][start_col] = 0
     
+    if (player == 1) and start_val == pawn and end_row == 7:
+        start_val = queen
+
+    if player == -1 and start_val == -1 * pawn and end_row == 0:
+        start_val = -1 * queen
+
     board2[end_row][end_col] = start_val
+    if (player == 1) and start_val == pawn and end_row == 7:
+        start_val = queen
+
     print('equal boards' + str(board == board2))
     return board2
 
@@ -471,8 +480,8 @@ while (1 == 1):
         invalid_string = True
         while(invalid_string == True):
             move_string = input(player_name + ", what is your move?: ")
-            if (len(move_string) == 5 and (move_string[0] in alph_up) and (move_string[1] in "1234567")
-            and (move_string[2] == ' ') and (move_string [3] in alph_up) and move_string[4] in "1234567"):
+            if (len(move_string) == 5 and (move_string[0] in alph_up) and (move_string[1] in "12345678")
+            and (move_string[2] == ' ') and (move_string [3] in alph_up) and move_string[4] in "12345678"):
                 invalid_string = False
 
 
