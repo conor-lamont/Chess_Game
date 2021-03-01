@@ -57,7 +57,7 @@ start_board = [
                ]
 
 def find_king(board, player):
-    '''find_king(board, player) returns a list containing the row and column of the co-ordinates of player's king'''
+    '''find_king(board, player) returns a list containing the row and column of the co-ordinates of player's king [row, col]'''
     row = 0
     while (row <= 7):
         col = 0
@@ -158,12 +158,12 @@ def legal_move(board, start_col, start_row, end_col, end_row, player):
     ''' legal_move(board, start_col, start_row, end_col, end_row, player) determines if the move from 
     board[start_row][start_col] to board[end_row][end_col] is a legal one done by player '''
     
-    if ((start_row > 8) or (start_row < 0) 
-        or (start_col > 8) or (start_col < 0)
-        or (end_row > 8) or (end_row < 0)
-        or (end_col > 8) or (end_col < 0)) :
+    if ((start_row >= 8) or (start_row < 0) 
+        or (start_col >= 8) or (start_col < 0)
+        or (end_row >= 8) or (end_row < 0)
+        or (end_col >= 8) or (end_col < 0)) :
         
-        return False;
+        return False
             
     piece = board[start_row][start_col]
     print("piece is" + str(piece))
@@ -176,9 +176,11 @@ def legal_move(board, start_col, start_row, end_col, end_row, player):
         if (piece == player * i):
             good_start_posn = True
         if (end_piece == (player * i)):
+            print("self interf end")
             self_interfere_end = True
         i = i + 1
     if (not(good_start_posn) or (self_interfere_end)):
+        print("start posn/good is:" + str(good_start_posn))
         return False
     legality = False
     if abs(piece) == pawn :
@@ -188,7 +190,9 @@ def legal_move(board, start_col, start_row, end_col, end_row, player):
     if abs(piece) == bishop :
         legality = legal_move_bishop(board, start_col, start_row, end_col, end_row, player)
     if abs(piece) == knight :
+        print("knight start")
         legality = legal_move_knight(board, start_col, start_row, end_col, end_row, player)
+        print("legal knight is" + str(legality))
     if abs(piece) == queen :
         legality = legal_move_queen(board, start_col, start_row, end_col, end_row, player)
     if abs(piece) == king :
@@ -205,16 +209,7 @@ def legal_move(board, start_col, start_row, end_col, end_row, player):
     if (friendly_king_safety == False):
         return False
     print("done this")
-    enemy_king_posn = find_king(board2, (-1 * player))
-    print("enemy player is" + str(-1 * player))
-    print('enemy king posn is' + str(enemy_king_posn))
-    enemy_king_safety = king_is_safe(board2, (-1 * player), enemy_king_posn[0], enemy_king_posn[1])
-
-    if (enemy_king_safety == False):
-        # temporary code:
-        print("Check")
-        noth = 0
-        # do a checkmate check
+   
 
 
     
@@ -357,7 +352,7 @@ def legal_move_knight(board, start_col, start_row, end_col, end_row, player):
     rows_moved = end_row - start_row
 
     good_move = False
-    if (abs(rows_moved) == 2 and abs(cols_moved == 1)) or (abs(rows_moved) == 1 and abs(cols_moved == 2)):
+    if (abs(rows_moved) == 2 and abs(cols_moved) == 1) or (abs(rows_moved) == 1 and abs(cols_moved) == 2):
         good_move = True
 
     return good_move
@@ -423,19 +418,191 @@ def king_is_safe(theor_board, player, king_row, king_col):
 
 
 def poss_rook_moves(board, rook_row, rook_col, player):
-    rook_moves = [[rook_row, rook_col], []]
-    sec_lst_idx = 0
-    right = rook_row + 1
-    while(legal_move(board, rook_row, rook_col, right, rook_col, player)):
-        rook_moves[1][sec_list_idx] = [right, rook_col]
-        right = right + 1
-        sec_list_idx = sec_list_idx + 1
+    ''' poss_rook_moves(board, rook_row, rook_col, player) returns whether
+    player's rook at (rook_row, rook_col) has any legal moves
+    '''
     
-    left = rook_row - 1
-    while(legal_move(board, rook_row, rook_col, left, rook_col, player)()):
-        rook_moves[1][sec_list_idx] = [left, rook_col]
+    right = rook_col + 1
+    while(right <= 7):
+
+        if legal_move(board, rook_col, rook_row, right, rook_row, player):
+                return True
+        
+        if abs(board[rook_row][right]) > 0:
+            break
+        
+        right = right + 1
+
+    left = rook_col - 1
+    while(left >= 0):
+        if legal_move(board, rook_col, rook_row, left, rook_row,  player):
+            return True
+        if abs(board[rook_row][left]) > 0:
+            break
         left = left - 1
-        sec_list_idx = sec_list_idx + 1
+
+    up = rook_row + 1
+    while (up <= 7):
+        if legal_move(board, rook_col, rook_row, rook_col, up,  player):
+            return True
+        if abs(board[up][rook_col]) > 0:
+            break
+        up = up + 1
+
+
+    down = rook_row - 1
+    while (down >= 0):
+        if legal_move(board, rook_col, rook_row, rook_col, down,  player):
+            return True
+        if abs(board[down][rook_col]) > 0:
+            break
+        down = down - 1
+
+    return False
+
+
+def poss_pawn_moves(board, pawn_row, pawn_col, player):
+    ''' poss_pawn_moves(board, pawn_row, pawn_col, player) returns whether
+    player's rook at (pawn_row, pawn_col) has any legal moves
+    '''
+
+    if ((legal_move(board, pawn_col, pawn_row, pawn_col, pawn_row + 1, player)) or
+    legal_move(board, pawn_col, pawn_row, pawn_col + 1, pawn_row + 1, player) or
+    (legal_move(board, pawn_col, pawn_row, pawn_col - 1, pawn_row + 1, player)) or 
+    legal_move(board, pawn_col, pawn_row, pawn_col, pawn_row + 2, player)):
+        return True
+    return False
+
+
+def poss_bishop_moves(board, bishop_row, bishop_col, player):
+    ''' poss_bishop_moves(board, bishop_row, bishop_col, player) returns whether
+    player's bishop at (bishop_row, bishop_col) has any legal moves
+    '''
+    
+    up = bishop_row + 1
+    right = bishop_col + 1
+    while(right <= 7 and up <= 7):
+
+        if legal_move(board, bishop_col, bishop_row, right, up,  player):
+            return True
+        
+        if abs(board[up][right]) > 0:
+            break
+        
+        right = right + 1
+        up = up + 1
+
+    left = bishop_col - 1
+    up = bishop_row + 1
+    while(left >= 0 and up <= 7):
+        if legal_move(board, bishop_col, bishop_row, left, up, player):
+            return True
+        if abs(board[up][left]) > 0:
+            break
+        left = left - 1
+        up = up + 1
+
+
+    down = bishop_row - 1
+    left = bishop_col - 1
+    while (down >= 0 and left >= 0):
+        if legal_move(board, bishop_col, bishop_row, left, down, player):
+            return True
+        if abs(board[down][left]) > 0:
+            break
+        down = down - 1
+        left = left - 1
+
+
+    right = bishop_col + 1
+    down = bishop_row - 1
+    while (down >= 0 and right <= 7):
+        if legal_move(board, bishop_col, bishop_row, down, right, player):
+            return True
+        if abs(board[down][right]) > 0:
+            break
+        right = right + 1
+        down = down - 1
+
+    return False
+
+
+
+def poss_knight_moves(board, knight_row, knight_col, player):
+    ''' poss_knight_moves(board, knight_row, knight_col, player) returns whether
+    player's knight at (knight_row, knight_col) has any legal moves
+    '''
+
+    return (legal_move(board, knight_col, knight_row, knight_col - 1, knight_row + 2, player) or
+           legal_move(board, knight_col, knight_row, knight_col + 1, knight_row + 2, player) or 
+           legal_move(board, knight_col, knight_row, knight_col + 2, knight_row + 1, player) or
+           legal_move(board, knight_col, knight_row, knight_col + 2, knight_row - 1, player) or
+           legal_move(board, knight_col, knight_row, knight_col + 1, knight_row - 2, player) or 
+           legal_move(board, knight_col, knight_row, knight_col - 1, knight_row - 2, player) or
+           legal_move(board, knight_col, knight_row, knight_col - 2, knight_row - 1, player) or
+           legal_move(board, knight_col, knight_row, knight_col - 2, knight_row + 1, player))
+
+def poss_queen_moves(board, queen_row, queen_col, player):
+    ''' poss_queen_moves(board, queen_row, queen_col, player) returns whether
+    player's queen at (queen_row, queen_col) has any legal moves
+    '''
+    return (poss_bishop_moves(board, queen_row, queen_col, player) or poss_rook_moves(board, queen_row, queen_col, player))
+
+
+def poss_king_moves(board, king_row, king_col, player):
+    ''' poss_queen_moves(board, king_row, king_col, player) returns whether
+    player's queen at (king_row, king_col) has any legal moves
+    '''
+    return (legal_move(board, king_col, king_row, king_col - 1, king_row - 1, player) or
+            legal_move(board, king_col, king_row, king_col - 1, king_row , player) or 
+            legal_move(board, king_col, king_row, king_col - 1, king_row + 1, player) or 
+            legal_move(board, king_col, king_row, king_col, king_row + 1, player) or
+            legal_move(board, king_col, king_row, king_col + 1, king_row + 1, player) or
+            legal_move(board, king_col, king_row, king_col + 1, king_row, player) or
+            legal_move(board, king_col, king_row, king_col + 1, king_row - 1, player) or
+            legal_move(board, king_col, king_row, king_col, king_row - 1, player))
+
+
+def checkmate(board, player_under_attack):
+    row = 0
+    king_under_attack_cords = find_king(board, player_under_attack)
+    king_row = king_under_attack_cords[0]
+    king_col = king_under_attack_cords[1]
+    print("cm check, king row is" + str(king_row) + "col is" + str(king_col))
+    
+
+
+    while (row <= 7):
+        col = 0
+        while col <= 7 :
+            if board[row][col] == player_under_attack * king:
+                if (True == poss_king_moves(board, row, col, player_under_attack)):
+                    return False
+            elif board[row][col] == player_under_attack * queen:
+                if (True == poss_queen_moves(board, row, col, player_under_attack)):
+                    return False
+            elif board[row][col] == player_under_attack * knight:
+                if (True == poss_knight_moves(board, row, col, player_under_attack)):
+                    return False
+            elif board[row][col] == player_under_attack * bishop:
+                if (True == poss_bishop_moves(board, row, col, player_under_attack)):
+                    return False
+            elif board[row][col] == player_under_attack * pawn:
+                if (True == poss_pawn_moves(board, row, col, player_under_attack)):
+                    return False
+            elif board[row][col] == player_under_attack * rook:
+                if (True == poss_rook_moves(board, row, col, player_under_attack)):
+                    return False
+            col = col + 1
+        row = row + 1
+
+
+    return True
+                 
+                
+                
+
+
         
 
 print('''
@@ -462,17 +629,11 @@ Let's get started! Here is the initial board:
 print_board(start_board, 1)   
 
 illegal_move = True
-board = start_board;
+board = copy.deepcopy(start_board);
 player = player1
+end = False
 
-while (1 == 1):
-    player_name = ''
-    if player == player1:
-        player_name = 'White'
-    else: 
-        player_name = 'Black'
-
-    while (illegal_move == True):
+while (end == False):
         if player == player1:
             player_name = 'White'
         else: 
@@ -503,8 +664,34 @@ while (1 == 1):
         if (legal_move(board, start_col, start_row, end_col, end_row, player) == True):
             illegal_Move = False
             board = perform_move(board, start_col, start_row, end_col, end_row, player)
-            player = -1 * player
-            print_board(board, player)  
+            
+            enemy_king_posn = find_king(board, (-1 * player))
+            print("enemy player is" + str(-1 * player))
+            print('enemy king posn is' + str(enemy_king_posn))
+            enemy_king_safety = king_is_safe(board, (-1 * player), enemy_king_posn[0], enemy_king_posn[1])
+
+            if (enemy_king_safety == False):
+                  # temporary code:
+                  chkm = checkmate(board, -1 * player)
+                  if (chkm == True):
+                        print("Checkmate! " + player_name + " won!")
+                        inval = True
+                        while (inval == True):
+                            play_again = input("Would you like to play again?: (Type YES or NO): ")
+                            if play_again == ("YES"):
+                                inval = False
+                                board = copy.deepcopy(start_board)
+                                print_board(board, player)
+                                player = player1
+                            if play_again == "NO":
+                                end = True
+                  else:
+                        player = -1 * player
+                        print_board(board, player)
+                        
+            else:
+                player = -1 * player
+                print_board(board, player)
         else:
             print("illegal move, try again")
         
